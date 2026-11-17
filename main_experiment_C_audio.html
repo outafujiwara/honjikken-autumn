@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>画像比較実験</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: sans-serif; text-align: center; max-width: 1000px;
+      margin: 28px auto; padding: 18px; color: #333; line-height: 1.7;
+      background: #fff;
+    }
+    h1 { font-size: 27px; margin-bottom: 8px; }
+    #status { min-height: 1.5em; color: #555; }
+    .panel {
+      max-width: 720px; margin: 24px auto; padding: 25px;
+      border: 1px solid #ddd; border-radius: 14px; text-align: left;
+    }
+    .panel h2 { text-align: center; margin-top: 0; }
+    .subtitle { text-align: center; color: #777; font-size: 14px; }
+    input[type="number"] { font-size: 18px; padding: 8px; width: 150px; }
+    button { cursor: pointer; }
+    .main-button {
+      display: block; margin: 20px auto 0; padding: 12px 34px;
+      font-size: 17px; color: #fff; background: #2463a8;
+      border: 0; border-radius: 9px;
+    }
+    .main-button:hover { background: #194e88; }
+    #experiment { margin-top: 20px; }
+    #progress { font-weight: bold; color: #555; }
+  
+#fixation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  margin: 0;
+  min-height: 0;
+
+  font-size: 64px;
+  font-weight: 300;
+  line-height: 1;
+
+  background: #fff;
+  z-index: 9999;
+}
+
+#fixation[hidden] {
+  display: none !important;
+}
+
+    .image-pair {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+      align-items: start; margin: 20px auto; max-width: 900px;
+    }
+    .image-card { min-width: 0; }
+    .image-card img {
+      display: block; width: 100%; height: 390px;
+      object-fit: contain; border: 1px solid #eee; border-radius: 8px;
+      background: #fafafa;
+    }
+    .side-label { font-weight: bold; margin: 5px 0 10px; }
+    #ratingArea { max-width: 850px; margin: 24px auto; }
+    #ratingHint {
+      display: flex; justify-content: space-between; gap: 10px;
+      font-size: 14px; font-weight: bold; margin-bottom: 8px;
+    }
+    #ratingButtons {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+    }
+    #ratingButtons button {
+      color: white; border: 0; border-radius: 8px;
+      padding: 13px 3px; font-size: 22px; font-weight: bold;
+      min-height: 54px;
+    }
+    #ratingButtons button:disabled { opacity: .45; cursor: not-allowed; }
+    .rate-left-3 { background: #808080;; }
+    .rate-left-2 { background:  #808080;; }
+    .rate-left-1 { background:  #808080;; }
+    .rate-zero { background: #808080; }
+    .rate-right-1 { background: #808080;; }
+    .rate-right-2 { background:  #808080;; }
+    .rate-right-3 { background:  #808080;; }
+    #audioStatus { min-height: 1.5em; color: #8a5a00; font-weight: bold; }
+    #complete { max-width: 650px; margin: 35px auto; padding: 28px;
+      border: 1px solid #ddd; border-radius: 14px; }
+    @media (max-width: 650px) {
+      body { margin: 12px auto; padding: 10px; }
+      .panel { padding: 17px; }
+      .image-pair { gap: 8px; }
+      .image-card img { height: 250px; }
+      #ratingButtons { gap: 4px; }
+      #ratingButtons button { font-size: 18px; min-height: 48px; }
+      #ratingHint { font-size: 11px; }
+    }
+    #categoryTransition {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+#categoryTransition h1 {
+  font-size: 28px;
+  margin-bottom: 30px;
+}
+
+#categoryTransitionTitle {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+#categoryTransitionMessage {
+  font-size: 18px;
+  margin-bottom: 40px;
+}
+
+#nextCategoryButton {
+  background-color: #808080;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 40px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+#nextCategoryButton:hover {
+  background-color: #666666;
+}
+/* 画像とスピーカーマーク */
+.image-wrapper {
+  position: relative;
+}
+
+.speaker-icon {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 36px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  padding: 4px 10px;
+}
+
+/* もう一度聞くボタン */
+#audioReplayButton {
+  background-color: #808080;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  margin: 10px auto;
+}
+
+#audioReplayButton:hover {
+  background-color: #666666;
+}
+
+#audioReplayButton:disabled {
+  background-color: #b0b0b0;
+  cursor: not-allowed;
+}
+  </style>
+</head>
+<body>
+  <h1>画像比較実験</h1>
+  <p id="status">開始画面を確認してください。</p>
+
+  <section id="startScreen" class="panel">
+    <h2>画像評価へのご協力のお願い</h2>
+    <p class="subtitle">2枚の画像を見比べ、どちらをより魅力的に感じるか評価してください。</p>
+    <p>これから2枚の画像が左右に表示されます。画像を見比べて、どちらをより魅力的に感じるか、7段階で回答してください。正解・不正解はありません。直感に従って回答してください。</p>
+    <h3>【評価方法】</h3>
+    <ul>
+      <li>左側の画像の方が魅力的だと感じる場合は、左側の数字を選んでください。</li>
+      <li>右側の画像の方が魅力的だと感じる場合は、右側の数字を選んでください。</li>
+      <li>どちらともいえない場合は「0」を選んでください。</li>
+    </ul>
+    <p><strong>評価尺度：</strong> 左 3・2・1・0・1・2・3 右</p>
+    <p>各試行の前に画面中央に注視点が1秒間表示されます。音声ありカテゴリでは、2枚の画像が表示された後、左側、右側の順に音声が再生されます。</p>
+    <div style="text-align:center; margin-top:24px;">
+      <label for="participantId"><strong>被験者番号</strong></label><br>
+      <input type="number" id="participantId" min="1" step="1" placeholder="例：1">
+    </div>
+    <button id="startButton" class="main-button">開始する</button>
+  </section>
+
+  <section id="experiment" hidden>
+    <p id="progress"></p>
+    <div id="fixation" hidden>＋</div>
+    <div id="pairArea" hidden>
+      <div class="image-pair">
+  <div class="image-card">
+    <div class="side-label">左</div>
+    <div class="image-wrapper">
+      <span id="leftSpeaker" class="speaker-icon" hidden>📢</span>
+      <img id="leftImage" alt="左側の画像">
+    </div>
+  </div>
+
+  <div class="image-card">
+    <div class="side-label">右</div>
+    <div class="image-wrapper">
+      <span id="rightSpeaker" class="speaker-icon" hidden>📢</span>
+      <img id="rightImage" alt="右側の画像">
+    </div>
+  </div>
+</div>
+      <p id="audioStatus"></p>
+      <button id="audioReplayButton" type="button" hidden>
+  もう一度聞く
+</button>
+      <div id="ratingArea">
+        <div id="ratingHint">
+          <span>← 左の画像が好き</span>
+          <span>右の画像が好き →</span>
+        </div>
+        <div id="ratingButtons">
+          <button class="rate-left-3" data-score="3" disabled>3</button>
+          <button class="rate-left-2" data-score="2" disabled>2</button>
+          <button class="rate-left-1" data-score="1" disabled>1</button>
+          <button class="rate-zero" data-score="0" disabled>0</button>
+          <button class="rate-right-1" data-score="-1" disabled>1</button>
+          <button class="rate-right-2" data-score="-2" disabled>2</button>
+          <button class="rate-right-3" data-score="-3" disabled>3</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- カテゴリ間の画面 -->
+<div id="categoryTransition" hidden>
+  <h1>お疲れさまでした！</h1>
+
+  <p id="categoryTransitionTitle"></p>
+
+  <p id="categoryTransitionMessage"></p>
+
+  <p>準備ができたら、次へ進んでください。</p>
+
+  <button id="nextCategoryButton" type="button">
+    次へ進む
+  </button>
+</div>
+
+  <section id="complete" hidden>
+    <h2>実験が終了しました</h2>
+    <p>ご協力ありがとうございました。</p>
+    <p id="completeMessage"></p>
+  </section>
+
+  <script src="main_experiment_C_audio.js"></script>
+</body>
+</html>
